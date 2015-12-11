@@ -21,10 +21,21 @@ INFOP:	DB LF,CR,"*****FANCY CALCULATOR*****"
  		DB LF,CR,"accuracy faster than      "
  		DB LF,CR,"Einstein's smart brother! "
  		DB LF,CR,"Supports [+,-,*,/]        "
+ 		DB LF,CR,EOT
 ;		
 IFORM: 	DB LF,CR,"                          "
-
+INSTR:  DB 0 DUP 20 
+OPND1:  DB 7
+OPND2:  DB 4
+OPRTR:  DB "+"
 START:
+ 	;print info panel
+ 	MOV AH, 09H
+ 	LEA DX,INFOP
+ 	INT 21H
+
+ 	;exit
+ 	CALL EXIT
 
 
 
@@ -93,44 +104,14 @@ BA16:	MOV	DX, 0		;clear upper half of dividend
 	ADD	B[SI+2], 30H
 	ADD	B[SI+3], 30H
 	ADD	B[SI+4], 30H
-	MOV	B[SI+5], EOM	;place end of message mark
+	MOV	B[SI+5], EOT	;place end of message mark
 	MOV	BX, 5
 	ADD	SI, BX		;point to byte after conversion
 	RET
 ;*******************************************************************
 
-MOV DX, 0
-	MOV BX, 10000
-	DIV BX
-
-	;ENTRY: VALUE IN AX
-	;EXIT:
-	;
-	B2A16: 	
-
-	MOV DX, 0
-	MOV BX, 10000
-	DIV BX 			;Q->AX, R->DX
-
-	MOV [TTH], AL 	;store the Q
-
-	MOV AX,DX
-	MOV DX,0
-	MOV BX,1000
-	DIV BX
-	MOV [TH],AL 	;store the Q
-
-	MOV AX, DX
-	CMP DX,255
-	JA OPTION1
-
-OPTION1: 	MOV DX,0
-			MOV BX,100
-			DIV BX
-			MOV [HUN],AL
-			
-OPTION2:    MOV DX,0
-			MOV AH,0
-			MOV BX,100
-			DIV BX
-			MOV [HUN],AL	
+; 	SUBROUTINE EXIT
+EXIT:
+	MOV AX,4C00H
+	INT 21H
+	RET
