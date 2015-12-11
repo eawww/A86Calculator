@@ -25,8 +25,8 @@ INFOP:	DB LF,CR,"*****FANCY CALCULATOR*****"
 ;		
 IFORM: 	DB LF,CR,"                          "
 INSTR:  DB 0 DUP 20 
-OPND1:  DB 7
-OPND2:  DB 4
+OPND1:  DB 200
+OPND2:  DB 150
 OPRTR:  DB "+"
 RESLT: 	DB "     ",LF,CR,EOT ;5 bytes reserved for ascii result
 START:
@@ -54,8 +54,8 @@ START:
 ;Subroutine CALC
 ;Performs integer calculations
 CALC:
-	MOV BL,B[OPND1] 	;load first operand into BL register
-	MOV BH,B[OPND2] 	;load second operand into BH register
+	MOV BH,B[OPND1] 	;load first operand into BH register
+	MOV BL,B[OPND2] 	;load second operand into BL register
 	MOV DH,B[OPRTR] 	;load operator byte into DH register
 
 	;find appropriate operation
@@ -70,8 +70,9 @@ CALC:
 	JMP NOOPR 	;if invalid operand
 ADDTN: 	;perform addition
 	MOV AH,0 		;clear upper half of destination
-	MOV AL,BL 		;move 1st operand into AX
- 	ADD AL,BH 		;AX should now contain binary result
+	MOV AL,BH 		;move 1st operand into AX
+	MOV BH,0 		;clear upper half of source
+ 	ADD AX,BX 		;AX should now contain binary result
  	LEA SI,RESLT 	;point SI at result buffer
  	CALL BA16
  	RET
