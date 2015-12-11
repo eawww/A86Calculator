@@ -25,9 +25,9 @@ INFOP:	DB LF,CR,"*****FANCY CALCULATOR*****"
 ;		
 IFORM: 	DB LF,CR,"                          "
 INSTR:  DB 0 DUP 20 
-OPND1:  DB 200
-OPND2:  DB 150
-OPRTR:  DB "+"
+OPND1:  DB 200 			;operand storage
+OPND2:  DB 150 			;operand storage
+OPRTR:  DB "-" 			;operator storage
 RESLT: 	DB "     ",LF,CR,EOT ;5 bytes reserved for ascii result
 START:
  	;print info panel
@@ -77,6 +77,13 @@ ADDTN: 	;perform addition
  	CALL BA16
  	RET
 SUBTN: 	;perform subtraction
+ 	MOV AH,0 		;clear upper half of destination
+	MOV AL,BH 		;move 1st operand into AX
+	MOV BH,0 		;clear upper half of source
+ 	SUB AX,BX 		;AX should now contain binary result
+ 	LEA SI,RESLT 	;point SI at result buffer
+ 	CALL BA16
+ 	RET
 MULTN: 	;perform multiplication
 DIVSN: 	;perform division
 NOOPR: 	;tell the user they're being stupid
