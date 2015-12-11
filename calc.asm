@@ -28,15 +28,57 @@ INSTR:  DB 0 DUP 20
 OPND1:  DB 7
 OPND2:  DB 4
 OPRTR:  DB "+"
+RESLT: 	DB "     ",LF,CR,EOT ;5 bytes reserved for ascii result
 START:
  	;print info panel
  	MOV AH, 09H
  	LEA DX,INFOP
  	INT 21H
 
+ 	;TODO prompt user input
+ 	;TODO get user input
+ 	;TODO parse user input
+
+ 	;call calculation subroutine
+ 	CALL CALC 	
+
+ 	;Print result
+ 	MOV AH, 09H
+ 	LEA DX,RESLT
+ 	INT 21H
+
  	;exit
  	CALL EXIT
 
+
+;Subroutine CALC
+;Performs integer calculations
+CALC:
+	MOV BL,B[OPND1] 	;load first operand into BL register
+	MOV BH,B[OPND2] 	;load second operand into BH register
+	MOV DH,B[OPRTR] 	;load operator byte into DH register
+
+	;find appropriate operation
+	CMP DH,"+" 	;check for addition
+	JE ADDTN
+	CMP DH,"-" 	;check for subtraction
+	JE SUBTN
+	CMP DH,"*" 	;check for multiplication
+	JE MULTN
+	CMP DH,"/" 	;check for division
+	JE DIVSN
+	JMP NOOPR 	;if invalid operand
+ADDTN: 	;perform addition
+	MOV AH,0 		;clear upper half of destination
+	MOV AL,BL 		;move 1st operand into AX
+ 	ADD AL,BH 		;AX should now contain binary result
+ 	LEA SI,RESLT 	;point SI at result buffer
+ 	CALL BA16
+ 	RET
+SUBTN: 	;perform subtraction
+MULTN: 	;perform multiplication
+DIVSN: 	;perform division
+NOOPR: 	;tell the user they're being stupid
 
 
 ;Subroutine B2A8
