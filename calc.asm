@@ -13,49 +13,91 @@ JMP START 		;Jump to that startsssss
 ;
 ;What's a variable?
 ;
-INFOP:	DB LF,CR,"*****FANCY CALCULATOR*****"
- 		DB LF,CR,"     By: Eric Wilson      "
- 		DB LF,CR,"Calculates simple         "
- 		DB LF,CR,"mathematical expressions  "
- 		DB LF,CR,"with pinpoint integer     "
- 		DB LF,CR,"accuracy faster than      "
- 		DB LF,CR,"Einstein's smart brother! "
- 		DB LF,CR,"Supports [+,-,*,/] and    "
- 		DB LF,CR,"non-negative operands.    "
- 		DB LF,CR,EOT
+INFOP:	DB LF,CR,"*****FANCY CALCULATOR*******"
+ 		DB LF,CR,"|     By: Eric Wilson      |"
+ 		DB LF,CR,"| Calculates simple        |"
+ 		DB LF,CR,"| mathematical expressions |"
+ 		DB LF,CR,"| with pinpoint integer    |"
+ 		DB LF,CR,"| accuracy faster than     |"
+ 		DB LF,CR,"| Einstein's smart brother!|"
+ 		DB LF,CR,"| Supports [+,-,*,/] and   |"
+ 		DB LF,CR,"| non-negative operands.   |"
+ 		DB LF,CR,"****************************"
+ 		DB LF,LF,CR,EOT
 ;		
 IFORM: 	DB LF,CR,"                          "
-INSTR:  DB 0 DUP 20 
+PROMP:  DB LF,CR,"Please express yourself mathematicallly:"
+		DB LF,CR,EOT
+INBUF:  DB 0 DUP 20 
 OPND1:  DB 203 			;operand storage
 OPND2:  DB 5 			;operand storage
-OPRTR:  DB "/" 			;operator storage
+OPRTR:  DB "*" 			;operator storage
 RESLT: 	DB "     ",EOT ;5 bytes reserved for ascii result
 RMNDR: 	DB "     ",EOT ;5 bytes reserved for ascii remainder
+RSSTR: 	DB "Result: ",EOT
+RMSTR:  DB "Remndr: ",EOT
 START:
  	;print info panel
  	MOV AH, 09H
  	LEA DX,INFOP
  	INT 21H
-
- 	;TODO prompt user input
+STRT1:
+	;TODO reset memory values
+	;TODO prompt user input
  	;TODO get user input
  	;TODO parse user input
 
  	;call calculation subroutine
  	CALL CALC 	
 
+ 	;Remove leading 0s from result
+ 	LEA SI,RESLT
+ 	CALL LDZRO
+
+ 	;Print result string
+ 	MOV AH, 09H
+ 	LEA DX,RSSTR
+ 	INT 21H
+
  	;Print result
  	MOV AH, 09H
- 	LEA DX,RMNDR
+ 	LEA DX,RESLT
  	INT 21H
 
  	;special for division
+ 	LEA SI,RMNDR
+ 	CMP B[SI],"0" 	;if remainder has been modified
+ 	JE PRTRM 		;jump to print remainder
 
-
+EXSTR:
  	;exit
  	CALL EXIT
 
+PRTRM:
+	;next line
+	MOV AH,02H
+	MOV DL,LF
+	INT 21H
+	MOV AH,02H
+	MOV DL,CR
+	INT 21H
 
+	;remove leading 0s from remainder
+	LEA SI,RMNDR
+	CALL LDZRO
+
+	;Print remainder string
+	MOV AH, 09H
+	LEA DX,RMSTR
+	INT 21H
+
+	;Print remainder
+	MOV AH, 09H
+	LEA DX, RMNDR
+	INT 21H
+
+	CALL EXIT
+;***************************************************************
 ;Subroutine CALC
 ;Performs integer calculations
 CALC:
@@ -112,39 +154,31 @@ DIVSN: 	;perform division
 NOOPR: 	;tell the user they're being stupid
 	;TODO do this
 ;***************************************************************
+;Subroutine LDZRO
+;
+;Eliminates leading 0s in 5 byte string
+;
+;ENTRY: SI points to string buffer location
+;
+;Exit: Where did the zeros go?
+LDZRO:
+	CMP B[SI],"0"
+	JNE ZRTRN
+	MOV B[SI]," "
+	CMP B[SI+1],"0"
+	JNE ZRTRN
+	MOV B[SI+1]," "
+	CMP B[SI+2],"0"
+	JNE ZRTRN
+	MOV B[SI+2]," "
+	CMP B[SI+3],"0"
+	JNE ZRTRN
+	MOV B[SI+3]," "
+	RET
+
+ZRTRN:
+	RET
 ;***************************************************************
-;Subroutine B2A8
-;
-;A subroutine that converts an 8 bit binary value into three bytes of ASCII
-;
-;ENTRY: DI points to save buffer for ASCII
-;    AL holds 8 bit value to convert
-;EXIT: Bytes written to memory pointed to by DI
-;
-B2A8:
-    MOV    CX, 0                ;clear counter
-HUND:    SUB    AL, 100                ;subtract 100
-    JC    TENS                ;if over subtracted, process tens
-    INC   CX                ;ohterwise add to hundreds count
-    JMP   HUND                ;check for another hundred
-TENS:    MOV    [DI], CL            ;save hundreds count
-    ADD   AL, 100                ;add back excessive subtraction
-    MOV   CX, 0                ;clear counter
-TENS1:    SUB    AL, 10                ;count how many tens
-    JC    UNITS                ;subtracted too much
-    INC   CX                ;increment tens count
-    JMP   TENS1                ;count more
-UNITS:    MOV    B[DI + 1], CL            ;save tens count
-    ADD   AL, 10                ;restore count
-    MOV   B[DI + 2], AL            ;save units
-    ADD   BYTE[DI], 30H            ;convert numbers to ASCII
-    ADD   BYTE[DI + 1], 30H
-    ADD   BYTE[DI + 2], 30H
-    RET
-;**************************************************
-
-;*******************************************************************
-
 ;	SUBROUTINE BA16
 ;
 ;	This subroutine converts a 16 bit binary value into 5 bytes
@@ -153,6 +187,8 @@ UNITS:    MOV    B[DI + 1], CL            ;save tens count
 ;	ENTRY:	The 16 bit value is in register AX
 ;		Regster SI points to the external 5 byte buffer
 ;	EXIT:	The external buffer contains the 5 characters
+;
+;****************************************************************
 ;
 BA16:	MOV	DX, 0		;clear upper half of dividend
 	MOV	BX, 10000	;set divisor
