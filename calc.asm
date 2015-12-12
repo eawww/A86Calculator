@@ -165,3 +165,34 @@ EXIT:
 	MOV AX,4C00H
 	INT 21H
 	RET
+
+;*******************************************************************
+
+;Subroutine A2B8
+;
+;This subroutine converts up to 3 bytes of ASCII into 8 bit binary
+;The input value must not exceed 255 - base 10
+;No error checking is performed
+;
+;ENTRY: SI points to input buffer
+;EXIT: AL holds binary value
+;
+A2B8:
+    PUSH    SI                ;save SI on entry
+    LEA    DI, MULT            ;point to placeholder values
+    SUB    B[SI], 30H            ;remove ASCII bias from numbers
+    SUB    B[SI + 1], 30H
+    SUB    B[SI + 2], 30H
+    MOV    CX, 3                 ;initialize loop counter
+    MOV    BL, 0                ;initialize sum register
+AB1:    MOV    AL, [SI]            ;get first byte
+    MOV    AH, 0                ;clear upper byte of AX
+    MUL    B[DI]                ;multiply by placeholder
+    ADD    BL, AL                ;save value
+    INC    DI                ;point to next place holder
+    INC    SI                ;point to next byte
+    LOOP    AB1
+    MOV    AL, BL                ;place sum into output register
+    POP    SI                ;restore SI
+    RET
+MULT    DB    100, 10, 1
