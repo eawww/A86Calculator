@@ -13,16 +13,16 @@ JMP START 		;Jump to that startsssss
 ;
 ;What's a variable?
 ;
-INFOP:	DB LF,CR,"*****FANCY CALCULATOR*******"
- 		DB LF,CR,"|     By: Eric Wilson      |"
- 		DB LF,CR,"| Calculates simple        |"
- 		DB LF,CR,"| mathematical expressions |"
- 		DB LF,CR,"| with pinpoint integer    |"
- 		DB LF,CR,"| accuracy faster than     |"
- 		DB LF,CR,"| Einstein's smart brother!|"
- 		DB LF,CR,"| Supports [+,-,*,/] and   |"
- 		DB LF,CR,"| non-negative operands.   |"
- 		DB LF,CR,"****************************"
+INFOP:	DB LF,CR,"***********~FANCY CALCULATOR~*************"
+ 		DB LF,CR,"|            By: Eric Wilson             |"
+ 		DB LF,CR,"|   Evaluates simple 8-bit mathematical  |"
+ 		DB LF,CR,"|    expressions with pinpoint integer   |"
+ 		DB LF,CR,"|  accuracy faster than Einstein's smart |"
+ 		DB LF,CR,"|               brother!                 |"
+ 		DB LF,CR,"|   Supports [+,-,*,/] and non-negative  |"
+ 		DB LF,CR,"|               operands.                |"
+ 		DB LF,CR,"|                                        |"
+ 		DB LF,CR,"******************************************"
  		DB LF,LF,CR,EOT
 ;		
 IFORM: 	DB LF,CR,"                          "
