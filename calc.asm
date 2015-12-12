@@ -20,15 +20,17 @@ INFOP:	DB LF,CR,"*****FANCY CALCULATOR*****"
  		DB LF,CR,"with pinpoint integer     "
  		DB LF,CR,"accuracy faster than      "
  		DB LF,CR,"Einstein's smart brother! "
- 		DB LF,CR,"Supports [+,-,*,/]        "
+ 		DB LF,CR,"Supports [+,-,*,/] and    "
+ 		DB LF,CR,"non-negative operands.    "
  		DB LF,CR,EOT
 ;		
 IFORM: 	DB LF,CR,"                          "
 INSTR:  DB 0 DUP 20 
-OPND1:  DB 200 			;operand storage
-OPND2:  DB 150 			;operand storage
-OPRTR:  DB "-" 			;operator storage
-RESLT: 	DB "     ",LF,CR,EOT ;5 bytes reserved for ascii result
+OPND1:  DB 203 			;operand storage
+OPND2:  DB 5 			;operand storage
+OPRTR:  DB "/" 			;operator storage
+RESLT: 	DB "     ",EOT ;5 bytes reserved for ascii result
+RMNDR: 	DB "     ",EOT ;5 bytes reserved for ascii remainder
 START:
  	;print info panel
  	MOV AH, 09H
@@ -44,8 +46,11 @@ START:
 
  	;Print result
  	MOV AH, 09H
- 	LEA DX,RESLT
+ 	LEA DX,RMNDR
  	INT 21H
+
+ 	;special for division
+
 
  	;exit
  	CALL EXIT
@@ -85,10 +90,29 @@ SUBTN: 	;perform subtraction
  	CALL BA16
  	RET
 MULTN: 	;perform multiplication
+	MOV AH,0 		;clear upper half of AX
+	MOV AL,BH 		;move 1st operand into AL
+	MUL BL 			;multiply it
+	LEA SI,RESLT 	;point SI at result buffer
+	CALL BA16 
+	RET
 DIVSN: 	;perform division
+	MOV AH,0 		;clear AH
+	MOV AL,BH 		;load numerator into AH
+	DIV BL 			;divide it
+	MOV CL,AH 		;keep remainder in CL temporarily
+	MOV AH,0 		;clear upper half of AX
+	LEA SI,RESLT	
+	CALL BA16 		;put quotient in result buffer
+	MOV AL,CL 		;load remainder into AL
+	MOV AH,0 		;clear upper half of AX
+	LEA SI,RMNDR 	;point SI at remainder buffer
+	CALL BA16 		
+	RET
 NOOPR: 	;tell the user they're being stupid
-
-
+	;TODO do this
+;***************************************************************
+;***************************************************************
 ;Subroutine B2A8
 ;
 ;A subroutine that converts an 8 bit binary value into three bytes of ASCII
