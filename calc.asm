@@ -33,12 +33,12 @@ INBUF  DB "                                      "
 OPND1:  DB 203 			;operand storage
 OPND2:  DB 5 			;operand storage
 OPRTR:  DB "*" 			;operator storage
-RESLT: 	DB "*****",EOT ;5 bytes reserved for ascii result
+RESLT: 	DB "     ",EOT ;5 bytes reserved for ascii result
 RMNDR: 	DB "     ",EOT ;5 bytes reserved for ascii remainder
 RSSTR: 	DB LF,CR,"Result: ",EOT
 RMSTR:  DB "Remndr: ",EOT
-OPST1:  DB "&&&"
-OPST2:  DB "&&&"
+OPST1:  DB "000"
+OPST2:  DB "000"
 START:
  	;print info panel
  	MOV AH, 09H
@@ -63,10 +63,19 @@ STRT1:
  	CALL PARSE
 
  	;DEBUG
- 	CALL VALUS
+ 	;CALL VALUS
+
+ 	;PREPARE VALUES FOR CALCULATION!!!
+ 	LEA SI,OPST1
+ 	CALL A2B8
+ 	MOV B[OPND1],AL
+
+ 	LEA SI,OPST2
+ 	CALL A2B8
+ 	MOV B[OPND2],AL
 	
  	;call calculation subroutine
- 	;CALL CALC 	
+ 	CALL CALC 	
 
  	;Remove leading 0s from result
  	LEA SI,RESLT
