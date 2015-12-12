@@ -28,27 +28,45 @@ INFOP:	DB LF,CR,"*****FANCY CALCULATOR*******"
 IFORM: 	DB LF,CR,"                          "
 PROMP:  DB LF,CR,"Please express yourself mathematicallly:"
 		DB LF,CR,EOT
-INBUF:  DB 0 DUP 20 
+INBUF  DB "                                      "
+		DB LF,CR,EOT
 OPND1:  DB 203 			;operand storage
 OPND2:  DB 5 			;operand storage
 OPRTR:  DB "*" 			;operator storage
-RESLT: 	DB "     ",EOT ;5 bytes reserved for ascii result
+RESLT: 	DB "*****",EOT ;5 bytes reserved for ascii result
 RMNDR: 	DB "     ",EOT ;5 bytes reserved for ascii remainder
-RSSTR: 	DB "Result: ",EOT
+RSSTR: 	DB LF,CR,"Result: ",EOT
 RMSTR:  DB "Remndr: ",EOT
+OPST1:  DB "&&&"
+OPST2:  DB "&&&"
 START:
  	;print info panel
  	MOV AH, 09H
  	LEA DX,INFOP
  	INT 21H
 STRT1:
-	;TODO reset memory values
-	;TODO prompt user input
- 	;TODO get user input
- 	;TODO parse user input
+	;reset memory values
+	MOV B[RMNDR]," "  	 	;reset remainder to check for division
+	;CALL INRST 			 	;reset input buffer
 
+	;prompt user input
+	MOV AH,09H
+	LEA DX,PROMP
+	INT 21H
+
+ 	;TODO get user input
+ 	MOV AH,0AH
+ 	MOV DX,OFFSET INBUF
+ 	INT 21H
+
+ 	;TODO parse user input
+ 	CALL PARSE
+
+ 	;DEBUG
+ 	CALL VALUS
+	
  	;call calculation subroutine
- 	CALL CALC 	
+ 	;CALL CALC 	
 
  	;Remove leading 0s from result
  	LEA SI,RESLT
@@ -97,6 +115,67 @@ PRTRM:
 	INT 21H
 
 	CALL EXIT
+;***************************************************************
+PARSE:
+	LEA SI,INBUF + 2 	;point SI at beginning of
+						;user input
+	;get first operand
+	MOV AH,0 		;reset AH
+	MOV AL,0 		;reset AL
+PRSE1:
+	CMP B[SI]," " 		;check for space
+	JE PRSE2X 		;copy 1st operand to memory
+	INC SI 			;next character
+	INC AH 			;position count + 1
+	JMP PRSE1
+PRSE2X:
+	MOV AL,AH 		;copy position count
+	LEA DI,OPST1 + 2
+PRSE2: 				;copy first operand into memory
+	CMP AH,0
+	JE PRSE3
+	DEC SI
+	MOV BH,B[SI]
+	MOV B[DI],BH
+	DEC AH
+	DEC DI
+	JMP PRSE2
+PRSE3: 				;loop to find space again
+	CMP B[SI]," "
+	JE PRSE4
+	INC SI
+	JMP PRSE3
+PRSE4: 				;save operator to memory
+	INC SI
+	MOV BH,B[SI]
+	LEA DI,OPRTR
+	MOV B[DI],BH
+	MOV AH,0
+	MOV AL,0
+	INC SI 		;move to expected pos of oprnd2
+	INC SI
+PRSE5:
+	CMP B[SI]," " 		;check for space
+	JE PRSE6X 		;copy 2nd operand to memory
+	INC SI 			;next character
+	INC AH 			;position count + 1
+	JMP PRSE5
+PRSE6X:
+	MOV AL,AH
+	LEA DI, OPST2 + 2
+	DEC SI
+	DEC AH
+PRSE6:
+	CMP AH,0
+	JE PRSE7
+	DEC SI
+	MOV BH,B[SI]
+	MOV B[DI],BH
+	DEC AH
+	DEC DI
+	JMP PRSE6
+PRSE7:
+	RET
 ;***************************************************************
 ;Subroutine CALC
 ;Performs integer calculations
@@ -178,6 +257,19 @@ LDZRO:
 
 ZRTRN:
 	RET
+
+INRST:
+	LEA SI,INBUF
+	MOV AL,20
+INRS1:
+	DEC AL
+	CMP AL,0
+	JE INRS2
+	MOV B[SI],"_"
+	INC SI
+	JMP INRS1
+INRS2:
+	RET	
 ;***************************************************************
 ;	SUBROUTINE BA16
 ;
@@ -256,3 +348,61 @@ AB1:    MOV    AL, [SI]            ;get first byte
     POP    SI                ;restore SI
     RET
 MULT    DB    100, 10, 1
+
+;*******************
+;*******************
+;print values subroutine for debug purposes
+VALUS:
+	;next line
+	MOV AH,02H
+	MOV DL,LF
+	INT 21H
+	MOV AH,02H
+	MOV DL,CR
+	INT 21H
+
+	;print 1st operand
+	MOV AH,02H
+	MOV DL,B[OPST1]
+	INT 21H
+	MOV AH,02H
+	MOV DL,B[OPST1 + 1]
+	INT 21H
+	MOV AH,02H
+	MOV DL,B[OPST1 + 2]
+	INT 21H
+
+	;next line
+	MOV AH,02H
+	MOV DL,LF
+	INT 21H
+	MOV AH,02H
+	MOV DL,CR
+	INT 21H
+
+	;print operator
+	MOV AH,02H
+	MOV DL,B[OPRTR]
+	INT 21H
+
+	;next line
+	MOV AH,02H
+	MOV DL,LF
+	INT 21H
+	MOV AH,02H
+	MOV DL,CR
+	INT 21H
+
+	;print 2nd operand
+	MOV AH,02H
+	MOV DL,B[OPST2]
+	INT 21H
+	MOV AH,02H
+	MOV DL,B[OPST2 + 1]
+	INT 21H
+	MOV AH,02H
+	MOV DL,B[OPST2 + 2]
+	INT 21H
+
+	RET
+
